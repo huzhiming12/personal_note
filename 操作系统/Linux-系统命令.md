@@ -183,7 +183,7 @@ pathname:表示要查找的目录路径
 
 2. 使用perm选项
 
-   ```
+   ```shell
    #查找当前目录下 权限是755的文件
    find . -perm 755 -print
    ```
@@ -271,7 +271,172 @@ pathname:表示要查找的目录路径
 
 10. mount，查找是不进入其他文件系统，只在当前文件系统中查找
 
-   ```shell
-   find ./ -name "*.txt" -mount -print
-   ```
+  ```shell
+  find ./ -name "*.txt" -mount -print
+  ```
+
+
+#### xargs命令
+
+xargs与find命令一起使用，find命令把匹配到的文件传递给xargs命令，而xargs 命令每次只获取一部分文件而不是全部，不像-exec选线那样，这样它就可以先处理最先获取的一部分文件，然后是下一批，如此继续下去。
+
+```shell
+find ./ -type f -print | xargs file
+```
+
+
+
+### shell输入与输出
+
+#### cat命令
+
+* 显示文件内容
+
+  ```shell
+  cat filename | more  //分页显示文件内容，按空格显示下一页
+  ```
+
+*  同时显示多个文件内容
+
+  ```shell
+  cat file1 file2 file3 ……
+  ```
+
+* 将多个文件合并到一个新文件中
+
+  ```shell
+  cat file1 file2 file3 > newfile
+  ```
+
+* 创建新的文件，并从标准输入（键盘）输入一些内容
+
+  ```shell
+  cat > newfile ##输入命令后即可添加文件内容，Ctrl+D 结束输入
+  ```
+
+#### 管道
+
+可以通过管道把一个命令的输出传递给另一个命令作为输入，管道用竖杠 **|**表示，一般形式是：命令1 | 命令2
+
+#### tee命令
+
+把输出的一个副本拷贝到另一个文件中
+
+```shell
+ls -l | tee -a myfile ##将列出的全部文件信息 追加到文件myfile中，如果没哟-a选项则会覆盖文件内容
+```
+
+
+
+### 进程管理命令
+
+#### ps
+
+浏览系统中的进程命令。
+
+-a:列出所有进程
+
+#### pstree
+
+以可视化方式显示进程，通过显示进程的树状图来展示进程之间的关系
+
+```shell
+systemd-+-accounts-daemon-+-{gdbus}
+        |                 `-{gmain}
+        |-acpid
+        |-2*[agetty]
+        |-atd
+        |-barad_agent-+-barad_agent
+        |             `-barad_agent---2*[{barad_agent}]
+        |-cron
+        |-dbus-daemon
+
+```
+
+#### top
+
+监视系统中不同的进程所使用的资源。它提供实时的系统状态信息。
+
+```shell
+top - 14:59:07 up 22 days, 17:11,  1 user,  load average: 0.00, 0.01, 0.00
+Tasks: 129 total,   2 running, 127 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  1.3 us,  0.7 sy,  0.0 ni, 97.7 id,  0.3 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem :   893032 total,    71288 free,   516640 used,   305104 buff/cache
+KiB Swap:        0 total,        0 free,        0 used.   230560 avail Mem 
+
+  PID USER      PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+ COMMAND               
+25867 root      20   0   36492  18800   5220 R  0.7  2.1  35:45.28 sap1009               
+ 5679 root      20   0   14704   3032   2604 S  0.3  0.3   0:43.49 sap1006               
+    1 root      20   0    6776   3996   2660 S  0.0  0.4   0:16.37 systemd               
+    2 root      20   0       0      0      0 S  0.0  0.0   0:00.00 kthreadd              
+    3 root      20   0       0      0      0 S  0.0  0.0   0:31.20 ksoftirqd/0           
+    5 root       0 -20       0      0      0 S  0.0  0.0   0:00.00 kworker/0:0H          
+    7 root      20   0       0      0      0 S  0.0  0.0  14:08.48 rcu_sched             
+    8 root      20   0       0      0      0 S  0.0  0.0   0:00.00 rcu_bh                
+    9 root      rt   0       0      0      0 S  0.0  0.0   0:00.00 migration/0           
+   10 root      rt   0       0      0      0 S  0.0  0.0   0:04.88 watchdog/0            
+   11 root      20   0       0      0      0 S  0.0  0.0   0:00.00 kdevtmpfs             
+   12 root       0 -20       0      0      0 S  0.0  0.0   0:00.00 netns                 
+   13 root       0 -20       0      0      0 S  0.0  0.0   0:00.00 perf                  
+   14 root      20   0       0      0      0 S  0.0  0.0   0:00.46 khungtaskd            
+   15 root       0 -20       0      0      0 S  0.0  0.0   0:00.00 writeback     
+```
+
+#### nice
+
+设置和修改进程的优先级。默认情况下，进程以0的优先级启动。
+
+```shell
+nice --3 top  ##给top命令设置优先级-3
+```
+
+#### Kill
+
+结束进程
+
+```
+kill 123 ##结束进程ID为123的进程
+kill -9 123  ##强制结束进程123
+```
+
+#### w
+
+显示当前登录用户及其执行的进程信息。
+
+```shell
+root@VM-58-249-ubuntu:~# w
+ 15:12:31 up 22 days, 17:24,  1 user,  load average: 0.14, 0.08, 0.04
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+root     pts/0    222.195.151.10   13:38    3.00s  0.12s  0.00s w
+```
+
+##### who
+
+显示当前所有登录的用户信息
+
+```shell
+root@VM-58-249-ubuntu:~# who
+root     pts/0        Aug 22 13:38 (222.195.151.10)
+```
+
+##### whoami
+
+显示当前用户的用户名
+
+```shell
+root@VM-58-249-ubuntu:~# whoami
+root
+```
+
+
+
+
+
+
+
+
+
+
+
+
 

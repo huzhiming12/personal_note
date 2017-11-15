@@ -115,6 +115,12 @@ tags: [HashMap,TreeMap,HashTable]
 
 ---
 
+### LinkedHashMap(非线程安全)
+
+继承自HashMap，在HashMap的基础之上维护着一条双向链表。LinkedHashMap中每个元素Entry<K,V>中包含一个before和一个after指针。同时LinkedHashMap中还有一hearder指针。LinkedhashMap中还有一个标志位accessOrder，当这个位false时，链表是按节点的插入顺序排列的，当为true时，是按访问顺序排序的。
+
+LinkedHashMap可以实现LRU（latest recently used）算法，将最近使用的放入表头
+
 
 
 ### Hashtable(线程安全)

@@ -1,3 +1,9 @@
+---
+layout: false
+---
+
+
+
 # Mac redis 安装教程
 
 #### redis环境搭建
@@ -10,7 +16,7 @@
 
 4. 编译测试：sudo make test
 
-   ![](pic/pic1.png)
+   ![](pic/pic11.png)
 
    编译成功！
 
@@ -18,7 +24,7 @@
 
    redis默认安装在usr/local/bin 目录下，可以进入usr/local/bin目录下查看这些工具
 
-   ![](pic/pic2.png)
+   ![](pic/pic12.png)
 
    主要包含以下几个工具：
 
@@ -111,13 +117,13 @@
 
    启动后如图所示：
 
-   ![](pic/pic3.png)
+   ![](pic/pic13.png)
 
 8. 启动redis客户端。另外打开一个终端，输入 
 
    > redis-cli
 
-   ![](pic/pic4.png)
+   ![](pic/pic14.png)
 
 9. 关闭redis服务器，在客户端中输入
 

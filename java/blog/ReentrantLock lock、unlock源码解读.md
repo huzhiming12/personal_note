@@ -5,7 +5,7 @@ categories: Java并发
 tags: [lock,unlock]
 ---
 
-> ReentrantLock 对于公平锁和非公平锁的加锁过程不同。对于公平锁加锁，如果前面没有比当前线程等候更久的线程的话，则当前线程直接获得锁，否则直接将当前线程插入等候队列中；对于非公平锁的加锁和前面不一样，如果前一个线程刚好结束state=0，此时无论当前线程前面是否有线程等候，当前线程都能直接抢占锁。如果前一个线程还没执行完毕，则当前线程便插入等候队列中。
+> ReentrantLock 对于公平锁和非公平锁的加锁过程不同。对于公平锁加锁，如果前面没有比当前线程等候更久的线程的话，则当前线程直接获得锁，否则直接将当前线程插入等候队列中；对于非公平锁的加锁和前面不一样，如果前一个线程刚好结束state=0，此时无论当前线程前面是否有线程等候，当前线程都能直接抢占锁。如果前一个线程还没执行完毕，则当前线程便插入等候队列中。ReentrantLock默认是非公平锁。
 
 ### 等候队列
 
@@ -149,4 +149,159 @@ static final class Node {
 
 
 
-未完……
+
+### 非公平锁
+
+1. ReentrantLock获取锁
+
+   ```java
+   public void lock() {
+           sync.lock();
+       }
+   ```
+
+2. 调用NonfairSync的lock方法，先判断锁是否被占用，如果没有直接获取；否则，尝试获取
+
+   ```java
+   final void lock() {
+     			//如果此时上一个线程刚执行完，state=0，则直接获取锁，这就是非公平锁，
+     			//无论此时等候队列中是否还有排队的线程，都直接占有锁
+               if (compareAndSetState(0, 1))
+                 	//设置当前线程为执行的线程
+                   setExclusiveOwnerThread(Thread.currentThread());
+               else
+                 	//尝试获取锁
+                   acquire(1);
+           }
+   ```
+
+3. 调用AbstractQueuedSynchronizer中的获取锁方法
+
+   ```java
+   public final void acquire(int arg) {
+     		//尝试去获取锁
+           if (!tryAcquire(arg) &&
+               //如果上面获取锁失败，则加入等候队列中
+               acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
+               // 如果成功加入等候队列中，则阻塞自身
+               selfInterrupt();
+       }
+   ```
+
+   * 调用NonfairSync重写的tryAcquire方法
+
+     ```java
+     protected final boolean tryAcquire(int acquires) {
+                 return nonfairTryAcquire(acquires);
+             }
+     ```
+
+   * 调用Sync内部类中nonfairTryAcquire方法
+
+     ```java
+     final boolean nonfairTryAcquire(int acquires) {
+                 final Thread current = Thread.currentThread();
+                 int c = getState();
+       			//如果此时没有线程占有锁，则当前线程直接占有，将state值改为1
+                 if (c == 0) {
+                   	//设置锁的状态为1
+                     if (compareAndSetState(0, acquires)) {
+                       	//设置当前线程为占有锁的线程
+                         setExclusiveOwnerThread(current);
+                         return true;
+                     }
+                 }
+       			//如果当前线程已经占有锁
+                 else if (current == getExclusiveOwnerThread()) {
+                   	//直接将锁的state值加1，表示当前线程有两个任务，可重入的实现
+                     int nextc = c + acquires;
+                     if (nextc < 0) // overflow
+                         throw new Error("Maximum lock count exceeded");
+                   	//更改state值
+                     setState(nextc);
+                     return true;
+                 }
+                 return false;
+             }
+     ```
+
+   * addWaiter()方法，将当前线程加入等候队列队尾
+
+     ```java
+     private Node addWaiter(Node mode) {
+             Node node = new Node(Thread.currentThread(), mode);
+             // Try the fast path of enq; backup to full enq on failure
+             Node pred = tail;
+       		//如果尾结点不为空，将当前结点插入尾结点的后面
+             if (pred != null) {
+               	//设置当前结点前结点为尾结点，即当前结点变为尾结点
+                 node.prev = pred;
+                 if (compareAndSetTail(pred, node)) {
+                     pred.next = node;
+                     return node;
+                 }
+             }
+       		//如果尾结点为空，即当前队列是空队列。则插入队列中，并把当前结点设为头结点和尾结点
+             enq(node);
+             return node;
+         }
+     ```
+
+   * enq操作，队里为空时，则先添加头结点，然后再加入队尾，头结点不存储信息
+
+     ```java
+     private Node enq(final Node node) {
+             for (;;) {
+                 Node t = tail;
+                 if (t == null) { // Must initialize
+                   	//如果尾结点为空，即队列为空，则先生成头结点。然后再次循环，走下面的逻辑
+                     if (compareAndSetHead(new Node()))
+                         tail = head;
+                 } else {
+                   	//如果队列不为空了，则加入队尾
+                     node.prev = t;  
+                     if (compareAndSetTail(t, node)) {
+                         t.next = node;
+                         return t;
+                     }
+                 }
+             }
+         }
+     ```
+
+   4. acquireQueued方法
+
+      ```java
+      final boolean acquireQueued(final Node node, int arg) {
+              boolean failed = true;
+              try {
+                  boolean interrupted = false;
+                  for (;;) {
+                      final Node p = node.predecessor();
+                    	//如果当前线程是等候队列中的唯一线程(因为head里面是没有信息的)
+                    	//则会再次尝试获取锁
+                      if (p == head && tryAcquire(arg)) {
+                        	//如果获取到锁的话，修改当前结点为头结点，并将里面的信息清空，同时删除当前的头
+                        	//结点。返回当前结点没有被阻塞
+                          setHead(node);
+                          p.next = null; // help GC
+                          failed = false;
+                          return interrupted;
+                      }
+                      if (shouldParkAfterFailedAcquire(p, node) &&
+                          parkAndCheckInterrupt())
+                          interrupted = true;
+                  }
+              } finally {
+                  if (failed)
+                      cancelAcquire(node);
+              }
+          }
+      private void setHead(Node node) {
+              head = node;
+              node.thread = null;
+              node.prev = null;
+          }
+      ```
+
+      ​

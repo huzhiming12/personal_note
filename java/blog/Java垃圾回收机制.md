@@ -32,7 +32,7 @@ tags: 垃圾回收
 
    目前主流的编程语言(java,C#等)的主流实现中,都是称通过可达性分析(Reachability Analysis)来判定对象是否存活的。这个算法的基本思路**就是通过一系列的称为“GC Roots”的对象作为起始点,从这些节点开始向下搜索,搜索所走过的路径称为引用链(Reference Chain),当一个对象到GC Roots没有任何引用链相连(用图论的话来说,就是从GC Roots到这个对象不可达)时,则证明此对象是不可用的。**如下图所示，对象object 5、object 6、object 7虽然互相有关联,但是它们到GC Roots是不可达的,所以它们将会被判定为是可回收的对象。
 
-   ![pic9](pic/pic9.png)
+   ![pic9](Java垃圾回收机制/pic9.png)
 
 在Java语言中,可作为GC Roots的对象包括下面几种:
 

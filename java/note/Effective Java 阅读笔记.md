@@ -1,3 +1,9 @@
+---
+layout: false
+---
+
+
+
 # Effective Java 阅读笔记
 
 #### 第一条：用静态工厂方法代替构造器

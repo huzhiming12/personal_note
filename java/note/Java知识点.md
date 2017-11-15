@@ -1,11 +1,16 @@
-# Java知识点
+---
+layout: false
+---
+
+
 
 #### 1. 小知识点
 
 ##### 1.1 数字前加0表示八进制数，加0x表示16进制。
 
-```java
+``` java
 package com.object;
+
 public class StaticTest
 {
 	public static void main(String[] args)
@@ -21,7 +26,9 @@ public class StaticTest
 
 ##### 1.2 Java类的成员函数名可以和构造函数名相同
 
-```Java
+
+
+``` java
 public class TestConStructor
 {
     public TestConStructor()
@@ -34,6 +41,10 @@ public class TestConStructor
     }
 }
 ```
+
+ 
+
+
 
 ##### 1.3 JVM 内存配置参数
 
